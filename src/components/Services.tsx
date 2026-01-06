@@ -7,7 +7,7 @@ const services = [
     emoji: "☕",
     title: "Chilling",
     description: "Casual hangouts at cafes, parks, or wherever you're comfortable. Just good vibes and easy conversation.",
-    price: "$25",
+    price: "₹500",
     features: [
       "Coffee dates & cafe hangouts",
       "Park walks & outdoor chilling",
@@ -20,7 +20,7 @@ const services = [
     emoji: "🛍️",
     title: "Shopping Companion",
     description: "Need a second opinion on that outfit? I'll help you find the perfect look or just keep you company.",
-    price: "$30",
+    price: "₹600",
     features: [
       "Fashion advice & outfit picks",
       "Grocery shopping buddy",
@@ -34,7 +34,7 @@ const services = [
     emoji: "📚",
     title: "Reading Partner",
     description: "Silent reading sessions or lively book discussions. Perfect for introverts who want company without pressure.",
-    price: "$20",
+    price: "₹400",
     features: [
       "Library & bookstore visits",
       "Silent reading sessions",
@@ -47,7 +47,7 @@ const services = [
     emoji: "🎮",
     title: "Gaming/Playing",
     description: "From video games to board games to outdoor sports. Let's have some competitive (or cooperative) fun!",
-    price: "$25",
+    price: "₹500",
     features: [
       "Video game co-op sessions",
       "Board game nights",
@@ -60,7 +60,7 @@ const services = [
     emoji: "💬",
     title: "Virtual Company",
     description: "Can't meet in person? I'm just a call away. Voice or video calls for when you need someone to talk to.",
-    price: "$15",
+    price: "₹300",
     features: [
       "Voice calls for venting",
       "Video call hangouts",
@@ -73,7 +73,7 @@ const services = [
     emoji: "🎭",
     title: "Event Buddy",
     description: "Concerts, movies, weddings, or that work event you don't want to go alone to. I've got you!",
-    price: "$40",
+    price: "₹800",
     features: [
       "Wedding +1 companion",
       "Concert & event partner",
