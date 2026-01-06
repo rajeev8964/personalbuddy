@@ -2,27 +2,66 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, Send, CheckCircle } from "lucide-react";
+import { Calendar, Clock, Send, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const activities = [
-  { value: "chilling", label: "☕ Chilling", price: "$25/hr" },
-  { value: "shopping", label: "🛍️ Shopping Companion", price: "$30/hr" },
-  { value: "reading", label: "📚 Reading Partner", price: "$20/hr" },
-  { value: "gaming", label: "🎮 Gaming/Playing", price: "$25/hr" },
-  { value: "virtual", label: "💬 Virtual Company", price: "$15/hr" },
-  { value: "event", label: "🎭 Event Buddy", price: "$40/hr" },
+  { value: "chilling", label: "☕ Chilling", price: "₹500/hr" },
+  { value: "shopping", label: "🛍️ Shopping Companion", price: "₹600/hr" },
+  { value: "reading", label: "📚 Reading Partner", price: "₹400/hr" },
+  { value: "gaming", label: "🎮 Gaming/Playing", price: "₹500/hr" },
+  { value: "virtual", label: "💬 Virtual Company", price: "₹300/hr" },
+  { value: "event", label: "🎭 Event Buddy", price: "₹800/hr" },
   { value: "custom", label: "✨ Custom Activity", price: "TBD" },
 ];
 
 const Booking = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState("");
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    date: "",
+    time: "",
+    message: "",
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
-    toast.success("Booking request sent! I'll get back to you soon 🎉");
+    
+    if (!selectedActivity) {
+      toast.error("Please select an activity!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const activityLabel = activities.find(a => a.value === selectedActivity)?.label || selectedActivity;
+      
+      const { data, error } = await supabase.functions.invoke("send-booking-email", {
+        body: {
+          name: formData.name,
+          email: formData.email,
+          activity: activityLabel,
+          date: formData.date,
+          time: formData.time,
+          message: formData.message,
+        },
+      });
+
+      if (error) throw error;
+
+      setSubmitted(true);
+      toast.success("Booking request sent! I'll get back to you soon 🎉");
+    } catch (error: any) {
+      console.error("Error sending booking:", error);
+      toast.error("Failed to send booking request. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -30,8 +69,8 @@ const Booking = () => {
       <section id="booking" className="py-20 md:py-32 bg-muted/50">
         <div className="container mx-auto px-4">
           <div className="max-w-2xl mx-auto text-center">
-            <div className="bg-card rounded-3xl p-12 shadow-soft border border-border">
-              <div className="w-20 h-20 bg-buddy-yellow-light rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="bg-card rounded-3xl p-12 shadow-3d border border-border transform-3d hover:shadow-3d-hover transition-all duration-500">
+              <div className="w-20 h-20 bg-buddy-yellow-light rounded-full flex items-center justify-center mx-auto mb-6 animate-bounce-3d">
                 <CheckCircle className="w-10 h-10 text-buddy-yellow" />
               </div>
               <h2 className="text-3xl font-display font-bold text-foreground mb-4">
@@ -41,7 +80,11 @@ const Booking = () => {
                 I'll review your booking request and get back to you within 24 hours. 
                 Can't wait to hang out!
               </p>
-              <Button variant="outline" onClick={() => setSubmitted(false)}>
+              <Button variant="outline" onClick={() => {
+                setSubmitted(false);
+                setFormData({ name: "", email: "", date: "", time: "", message: "" });
+                setSelectedActivity("");
+              }} className="shadow-3d-sm hover:shadow-3d transition-all duration-300">
                 Submit Another Request
               </Button>
             </div>
@@ -57,7 +100,7 @@ const Booking = () => {
         <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Left Column - Info */}
           <div>
-            <span className="inline-block text-sm font-semibold text-buddy-blue bg-buddy-blue-light px-4 py-1 rounded-full mb-4">
+            <span className="inline-block text-sm font-semibold text-buddy-blue bg-buddy-blue-light px-4 py-1 rounded-full mb-4 shadow-3d-sm">
               Book Your Buddy
             </span>
             <h2 className="text-3xl md:text-5xl font-display font-bold text-foreground mb-6">
@@ -71,8 +114,8 @@ const Booking = () => {
 
             {/* Quick info cards */}
             <div className="space-y-4">
-              <div className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
-                <div className="w-12 h-12 rounded-lg bg-buddy-yellow-light flex items-center justify-center">
+              <div className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-3d-sm hover:shadow-3d hover:-translate-y-1 hover:translate-x-1 transition-all duration-300 transform-3d">
+                <div className="w-12 h-12 rounded-lg bg-buddy-yellow-light flex items-center justify-center shadow-inner-3d">
                   <Calendar className="w-6 h-6 text-buddy-yellow" />
                 </div>
                 <div>
@@ -80,8 +123,8 @@ const Booking = () => {
                   <p className="text-sm text-muted-foreground">Mornings, evenings, weekends — I work around you</p>
                 </div>
               </div>
-              <div className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border">
-                <div className="w-12 h-12 rounded-lg bg-buddy-blue-light flex items-center justify-center">
+              <div className="flex items-center gap-4 p-4 bg-card rounded-xl border border-border shadow-3d-sm hover:shadow-3d hover:-translate-y-1 hover:translate-x-1 transition-all duration-300 transform-3d">
+                <div className="w-12 h-12 rounded-lg bg-buddy-blue-light flex items-center justify-center shadow-inner-3d">
                   <Clock className="w-6 h-6 text-buddy-blue" />
                 </div>
                 <div>
@@ -93,7 +136,7 @@ const Booking = () => {
           </div>
 
           {/* Right Column - Form */}
-          <div className="bg-card rounded-3xl p-6 md:p-10 shadow-soft border border-border">
+          <div className="bg-card rounded-3xl p-6 md:p-10 shadow-3d border border-border transform-3d hover:shadow-3d-hover transition-all duration-500">
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Name */}
               <div>
@@ -104,7 +147,9 @@ const Booking = () => {
                   type="text" 
                   placeholder="What should I call you?"
                   required
-                  className="h-12"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="h-12 shadow-inner-3d"
                 />
               </div>
 
@@ -117,7 +162,9 @@ const Booking = () => {
                   type="email" 
                   placeholder="your@email.com"
                   required
-                  className="h-12"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="h-12 shadow-inner-3d"
                 />
               </div>
 
@@ -132,10 +179,10 @@ const Booking = () => {
                       key={activity.value}
                       type="button"
                       onClick={() => setSelectedActivity(activity.value)}
-                      className={`p-3 rounded-xl text-left text-sm border-2 transition-all duration-200 ${
+                      className={`p-3 rounded-xl text-left text-sm border-2 transition-all duration-300 transform-3d ${
                         selectedActivity === activity.value
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
+                          ? "border-primary bg-primary/5 shadow-3d-sm -translate-y-1"
+                          : "border-border hover:border-primary/50 hover:shadow-3d-sm hover:-translate-y-0.5"
                       }`}
                     >
                       <span className="block font-medium text-foreground">{activity.label}</span>
@@ -154,7 +201,9 @@ const Booking = () => {
                   <Input 
                     type="date" 
                     required
-                    className="h-12"
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    className="h-12 shadow-inner-3d"
                   />
                 </div>
                 <div>
@@ -164,7 +213,9 @@ const Booking = () => {
                   <Input 
                     type="time" 
                     required
-                    className="h-12"
+                    value={formData.time}
+                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    className="h-12 shadow-inner-3d"
                   />
                 </div>
               </div>
@@ -176,14 +227,31 @@ const Booking = () => {
                 </label>
                 <Textarea 
                   placeholder="Tell me about yourself, any specific plans, or questions you have..."
-                  className="min-h-[120px] resize-none"
+                  className="min-h-[120px] resize-none shadow-inner-3d"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                 />
               </div>
 
               {/* Submit */}
-              <Button type="submit" variant="hero" size="xl" className="w-full">
-                <Send className="w-5 h-5 mr-2" />
-                Send Booking Request
+              <Button 
+                type="submit" 
+                variant="hero" 
+                size="xl" 
+                className="w-full shadow-3d hover:shadow-3d-hover hover:-translate-y-1 transition-all duration-300"
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5 mr-2" />
+                    Send Booking Request
+                  </>
+                )}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center">
