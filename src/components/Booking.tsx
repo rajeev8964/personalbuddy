@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 const activities = [
   { value: "personal", label: "☕ Personal Hangout", price: "₹199/hr" },
   { value: "movie", label: "🎬 Movie & Chill", price: "₹59/hr" },
-  { value: "shopping", label: "🛍️ Shopping Buddy", price: "99/hr" },
+  { value: "shopping", label: "🛍️ Shopping Buddy", price: "₹99/hr" },
   { value: "coffee", label: "☕ Coffee partner", price: "₹99/hr" },
   { value: "study", label: "📚 Study Partner", price: "₹69/hr" },
   { value: "event", label: "🎭 Event Companion", price: "₹199/hr" },
