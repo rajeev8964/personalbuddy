@@ -17,15 +17,87 @@ interface BookingRequest {
   message: string;
 }
 
+// Simple in-memory rate limiting (resets on function cold start)
+const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
+const RATE_LIMIT = 3; // requests per window
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+
+const isRateLimited = (ip: string): boolean => {
+  const now = Date.now();
+  const record = rateLimitMap.get(ip);
+  
+  if (!record || now > record.resetTime) {
+    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW_MS });
+    return false;
+  }
+  
+  if (record.count >= RATE_LIMIT) {
+    return true;
+  }
+  
+  record.count++;
+  return false;
+};
+
+// Basic email validation
+const isValidEmail = (email: string): boolean => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
+};
+
+// Sanitize string input
+const sanitizeInput = (input: string, maxLength: number = 500): string => {
+  if (typeof input !== 'string') return '';
+  return input.slice(0, maxLength).replace(/<[^>]*>/g, '');
+};
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { name, email, activity, date, time, message }: BookingRequest = await req.json();
+    // Get client IP for rate limiting
+    const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
+                     req.headers.get("cf-connecting-ip") || 
+                     "unknown";
+    
+    // Check rate limit
+    if (isRateLimited(clientIP)) {
+      console.warn(`Rate limit exceeded for IP: ${clientIP}`);
+      return new Response(
+        JSON.stringify({ error: "Too many requests. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
 
-    console.log("Received booking request:", { name, email, activity, date, time });
+    const body = await req.json();
+    
+    // Validate and sanitize inputs
+    const name = sanitizeInput(body.name, 100);
+    const email = sanitizeInput(body.email, 254);
+    const activity = sanitizeInput(body.activity, 100);
+    const date = sanitizeInput(body.date, 50);
+    const time = sanitizeInput(body.time, 50);
+    const message = sanitizeInput(body.message || '', 1000);
+
+    // Validate required fields
+    if (!name || !email || !activity || !date || !time) {
+      return new Response(
+        JSON.stringify({ error: "Please fill in all required fields." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Validate email format
+    if (!isValidEmail(email)) {
+      return new Response(
+        JSON.stringify({ error: "Please provide a valid email address." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    console.log("Processing booking request:", { name, activity, date, time });
 
     // Send email to owner
     const ownerEmailRes = await fetch("https://api.resend.com/emails", {
@@ -73,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (!ownerEmailRes.ok) {
       const errorData = await ownerEmailRes.text();
       console.error("Failed to send email to owner:", errorData);
-      throw new Error(`Failed to send email: ${errorData}`);
+      throw new Error("Email service error");
     }
 
     console.log("Email sent to owner successfully");
@@ -137,8 +209,9 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in send-booking-email function:", error);
+    // Return generic error message - don't expose internal details
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: "Unable to process your booking request. Please try again later." }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },
