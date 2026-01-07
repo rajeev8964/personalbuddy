@@ -1,4 +1,4 @@
-import { Heart, Mail, Instagram, Twitter } from "lucide-react";
+import { Heart, Mail, Instagram, Twitter, MessageCircle } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -18,13 +18,21 @@ const Footer = () => {
               and always here when you need a friend.
             </p>
             <div className="flex gap-4">
+              <a 
+                href="https://wa.me/917970137598" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-green-500/20 flex items-center justify-center hover:bg-green-500/30 transition-colors"
+              >
+                <MessageCircle className="w-5 h-5 text-green-400" />
+              </a>
               <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Instagram className="w-5 h-5" />
               </a>
               <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Twitter className="w-5 h-5" />
               </a>
-              <a href="#" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors">
+              <a href="mailto:buddyhello736@gmail.com" className="w-10 h-10 rounded-full bg-background/10 flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Mail className="w-5 h-5" />
               </a>
             </div>
