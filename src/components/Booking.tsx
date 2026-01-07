@@ -7,12 +7,12 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 const activities = [
-  { value: "chilling", label: "☕ Chilling", price: "₹500/hr" },
-  { value: "shopping", label: "🛍️ Shopping Companion", price: "₹600/hr" },
-  { value: "reading", label: "📚 Reading Partner", price: "₹400/hr" },
-  { value: "gaming", label: "🎮 Gaming/Playing", price: "₹500/hr" },
-  { value: "virtual", label: "💬 Virtual Company", price: "₹300/hr" },
-  { value: "event", label: "🎭 Event Buddy", price: "₹800/hr" },
+  { value: "personal", label: "☕ Personal Hangout", price: "₹499/hr" },
+  { value: "movie", label: "🎬 Movie & Chill", price: "₹349/hr" },
+  { value: "shopping", label: "🛍️ Shopping Buddy", price: "₹299/hr" },
+  { value: "coffee", label: "☕ Coffee Date", price: "₹199/hr" },
+  { value: "study", label: "📚 Study Partner", price: "₹249/hr" },
+  { value: "event", label: "🎭 Event Companion", price: "₹599/hr" },
   { value: "custom", label: "✨ Custom Activity", price: "TBD" },
 ];
 
