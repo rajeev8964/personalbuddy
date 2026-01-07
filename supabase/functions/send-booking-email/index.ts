@@ -108,7 +108,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Rent-A-Buddy <onboarding@resend.dev>",
-        to: ["rriscrazy@gmail.com"],
+        to: ["rajeevrathour80764@gmail.com"],
         subject: `🎉 New Booking Request from ${name}!`,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #fff9e6 0%, #e6f3ff 100%); padding: 40px; border-radius: 20px;">
