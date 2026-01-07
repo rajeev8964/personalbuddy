@@ -1,4 +1,5 @@
 import { Heart, Shield, Smile, Clock } from "lucide-react";
+import buddyPhoto from "@/assets/buddy-photo.jpeg";
 
 const traits = [
   {
@@ -35,14 +36,23 @@ const About = () => {
               <div className="absolute inset-0 bg-buddy-yellow-light rounded-3xl rotate-6 opacity-50" />
               <div className="absolute inset-0 bg-buddy-blue-light rounded-3xl -rotate-3 opacity-50" />
               
-              {/* Main card */}
-              <div className="relative bg-card rounded-3xl shadow-soft overflow-hidden h-full flex items-center justify-center">
-                <div className="text-center p-8">
-                  <div className="text-8xl mb-4">🙋‍♂️</div>
-                  <h3 className="text-2xl font-display font-bold text-foreground mb-2">
+              {/* Main card with photo background */}
+              <div 
+                className="relative rounded-3xl shadow-soft overflow-hidden h-full flex items-end justify-center"
+                style={{
+                  backgroundImage: `url(${buddyPhoto})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center top',
+                }}
+              >
+                {/* Gradient overlay for text readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                
+                <div className="relative text-center p-8 z-10">
+                  <h3 className="text-2xl font-display font-bold text-white mb-2">
                     Hey, I'm Your Buddy!
                   </h3>
-                  <p className="text-muted-foreground">
+                  <p className="text-white/80">
                     Professional friend, amateur comedian, excellent listener
                   </p>
                   <div className="mt-6 flex justify-center gap-2">
