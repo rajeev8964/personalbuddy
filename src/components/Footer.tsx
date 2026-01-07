@@ -65,8 +65,8 @@ const Footer = () => {
               <li>9 AM - 10 PM</li>
               <li>Virtual calls anytime</li>
               <li className="pt-2">
-                <a href="mailto:hello@rentabuddy.com" className="hover:text-background transition-colors">
-                  hello@rentabuddy.com
+                <a href="mailto:buddyhello736@gmail.com" className="hover:text-background transition-colors">
+                  buddyhello736@gmail.com
                 </a>
               </li>
             </ul>
