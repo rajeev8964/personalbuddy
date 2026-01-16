@@ -12,6 +12,7 @@ const activities = [
   { value: "shopping", label: "🛍️ Shopping Buddy", price: "₹99/hr" },
   { value: "coffee", label: "☕ Coffee partner", price: "₹99/hr" },
   { value: "study", label: "📚 Study Partner", price: "₹69/hr" },
+  { value: "gaming", label: "🎮 Gaming/Playing", price: "₹59/hr" },
   { value: "event", label: "🎭 Event Companion", price: "₹199/hr" },
   { value: "custom", label: "✨ Custom Activity", price: "TBD" },
 ];
