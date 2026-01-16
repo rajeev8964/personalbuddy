@@ -62,6 +62,11 @@ const Footer = () => {
                   Book Now
                 </a>
               </li>
+              <li>
+                <a href="/admin-auth" className="text-background/70 hover:text-background transition-colors">
+                  Admin Portal
+                </a>
+              </li>
             </ul>
           </div>
 
