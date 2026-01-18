@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -40,7 +41,13 @@ const Header = () => {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-3">
+            <Button variant="ghost" size="sm" asChild>
+              <Link to="/login">
+                <User className="w-4 h-4 mr-2" />
+                Login
+              </Link>
+            </Button>
             <Button variant="hero" size="default" asChild>
               <a href="#booking">Let's Hang Out! 👋</a>
             </Button>
@@ -70,6 +77,14 @@ const Header = () => {
                   {link.label}
                 </a>
               ))}
+              <Link
+                to="/login"
+                className="text-muted-foreground hover:text-foreground font-medium transition-colors duration-200 py-2 flex items-center gap-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <User className="w-4 h-4" />
+                Login / My Bookings
+              </Link>
               <Button variant="hero" size="lg" className="mt-2" asChild>
                 <a href="#booking" onClick={() => setIsMenuOpen(false)}>
                   Let's Hang Out! 👋
