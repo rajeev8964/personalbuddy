@@ -7,8 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User } from "lucide-react";
+import { Loader2, User, Chrome } from "lucide-react";
 import { z } from "zod";
+import { Separator } from "@/components/ui/separator";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -106,6 +107,24 @@ const Login = () => {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/my-bookings`,
+        },
+      });
+
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Google login error:', error);
+      toast.error(error.message || "Google login failed");
+      setLoading(false);
+    }
+  };
+
   if (checkingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -127,6 +146,25 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Button
+            variant="outline"
+            className="w-full mb-4"
+            onClick={handleGoogleLogin}
+            disabled={loading}
+          >
+            <Chrome className="mr-2 h-4 w-4" />
+            Continue with Google
+          </Button>
+          
+          <div className="relative mb-4">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
+
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
