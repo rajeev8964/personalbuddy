@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Loader2, User, Chrome } from "lucide-react";
+import { Loader2, User } from "lucide-react";
+import GoogleIcon from "@/components/icons/GoogleIcon";
 import { z } from "zod";
 import { Separator } from "@/components/ui/separator";
 
@@ -148,11 +149,11 @@ const Login = () => {
         <CardContent>
           <Button
             variant="outline"
-            className="w-full mb-4"
+            className="w-full mb-4 bg-white hover:bg-gray-50 text-gray-700 border-gray-300 shadow-sm"
             onClick={handleGoogleLogin}
             disabled={loading}
           >
-            <Chrome className="mr-2 h-4 w-4" />
+            <GoogleIcon className="mr-2 h-5 w-5" />
             Continue with Google
           </Button>
           
