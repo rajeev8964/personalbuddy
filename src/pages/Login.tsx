@@ -20,6 +20,7 @@ const authSchema = z.object({
 const Login = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -109,7 +110,7 @@ const Login = () => {
   };
 
   const handleGoogleLogin = async () => {
-    setLoading(true);
+    setGoogleLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -122,7 +123,7 @@ const Login = () => {
     } catch (error: any) {
       console.error('Google login error:', error);
       toast.error(error.message || "Google login failed");
-      setLoading(false);
+      setGoogleLoading(false);
     }
   };
 
@@ -151,10 +152,19 @@ const Login = () => {
             variant="outline"
             className="w-full mb-4 bg-white hover:bg-gray-50 text-gray-700 border-gray-300 shadow-sm"
             onClick={handleGoogleLogin}
-            disabled={loading}
+            disabled={googleLoading || loading}
           >
-            <GoogleIcon className="mr-2 h-5 w-5" />
-            Continue with Google
+            {googleLoading ? (
+              <>
+                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <GoogleIcon className="mr-2 h-5 w-5" />
+                Continue with Google
+              </>
+            )}
           </Button>
           
           <div className="relative mb-4">
