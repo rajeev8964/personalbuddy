@@ -7,7 +7,6 @@ import buddyPhoto from "@/assets/buddy-photo.jpeg";
 interface FriendProfile {
   id: string;
   full_name: string;
-  email: string;
   age: number;
   education: string;
   weight: string;

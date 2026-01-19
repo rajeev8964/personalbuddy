@@ -40,8 +40,9 @@ const MyBookings = () => {
       if (!session?.user) {
         navigate('/login');
       } else {
+        // RLS enforces access based on JWT email, no need to pass email param
         setTimeout(() => {
-          fetchBookings(session.user.email!);
+          fetchBookings();
         }, 0);
       }
     });
@@ -53,15 +54,16 @@ const MyBookings = () => {
       if (!session?.user) {
         navigate('/login');
       } else {
-        fetchBookings(session.user.email!);
+        fetchBookings();
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const fetchBookings = async (email: string) => {
+  const fetchBookings = async () => {
     try {
+      // RLS policy ensures users can only see their own bookings based on JWT email
       const { data, error } = await supabase
         .from('friend_bookings')
         .select(`
@@ -71,7 +73,6 @@ const MyBookings = () => {
             profile_picture_url
           )
         `)
-        .eq('client_email', email)
         .order('booking_date', { ascending: false });
 
       if (error) throw error;
