@@ -7,7 +7,6 @@ import { Loader2 } from "lucide-react";
 interface FriendProfile {
   id: string;
   full_name: string;
-  email: string;
   age: number;
   education: string;
   weight: string;
@@ -30,8 +29,9 @@ const FriendsSection = () => {
 
   const fetchFriends = async () => {
     try {
+      // Use the public view that excludes sensitive email addresses
       const { data, error } = await supabase
-        .from('friend_profiles')
+        .from('friend_profiles_public')
         .select('*')
         .order('created_at', { ascending: false });
 

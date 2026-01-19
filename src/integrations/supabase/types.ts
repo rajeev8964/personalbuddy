@@ -65,6 +65,13 @@ export type Database = {
             referencedRelation: "friend_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "friend_bookings_friend_id_fkey"
+            columns: ["friend_id"]
+            isOneToOne: false
+            referencedRelation: "friend_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       friend_profiles: {
@@ -138,7 +145,51 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      friend_profiles_public: {
+        Row: {
+          age: number | null
+          bio_data: string | null
+          created_at: string | null
+          education: string | null
+          full_name: string | null
+          height: string | null
+          hobbies: string | null
+          id: string | null
+          profile_picture_url: string | null
+          status: Database["public"]["Enums"]["profile_status"] | null
+          updated_at: string | null
+          weight: string | null
+        }
+        Insert: {
+          age?: number | null
+          bio_data?: string | null
+          created_at?: string | null
+          education?: string | null
+          full_name?: string | null
+          height?: string | null
+          hobbies?: string | null
+          id?: string | null
+          profile_picture_url?: string | null
+          status?: Database["public"]["Enums"]["profile_status"] | null
+          updated_at?: string | null
+          weight?: string | null
+        }
+        Update: {
+          age?: number | null
+          bio_data?: string | null
+          created_at?: string | null
+          education?: string | null
+          full_name?: string | null
+          height?: string | null
+          hobbies?: string | null
+          id?: string | null
+          profile_picture_url?: string | null
+          status?: Database["public"]["Enums"]["profile_status"] | null
+          updated_at?: string | null
+          weight?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
