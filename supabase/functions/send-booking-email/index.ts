@@ -97,7 +97,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Processing booking request:", { name, activity, date, time });
+    console.log("Processing booking request", { hasName: !!name, hasActivity: !!activity, hasDate: !!date, hasTime: !!time });
 
     // Send email to owner
     const ownerEmailRes = await fetch("https://api.resend.com/emails", {
@@ -143,8 +143,8 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!ownerEmailRes.ok) {
-      const errorData = await ownerEmailRes.text();
-      console.error("Failed to send email to owner:", errorData);
+      await ownerEmailRes.text(); // Consume response body
+      console.error("Failed to send email to owner", { status: ownerEmailRes.status });
       throw new Error("Email service error");
     }
 
@@ -208,7 +208,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("Error in send-booking-email function:", error);
+    console.error("Error in send-booking-email function", { message: error?.message });
     // Return generic error message - don't expose internal details
     return new Response(
       JSON.stringify({ error: "Unable to process your booking request. Please try again later." }),

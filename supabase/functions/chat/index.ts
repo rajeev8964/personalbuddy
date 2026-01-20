@@ -69,8 +69,8 @@ serve(async (req) => {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
+      await response.text(); // Consume response body
+      console.error("AI gateway error", { status: response.status });
       return new Response(JSON.stringify({ error: "Failed to get AI response" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -81,8 +81,8 @@ serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
   } catch (error) {
-    console.error("Chat error:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }), {
+    console.error("Chat error", { message: error instanceof Error ? error.message : "Unknown error" });
+    return new Response(JSON.stringify({ error: "An error occurred processing your request" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
