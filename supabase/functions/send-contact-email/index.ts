@@ -91,7 +91,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Processing contact request:", { name, subject });
+    console.log("Processing contact request", { hasName: !!name, hasSubject: !!subject });
 
     // Send email to owner
     const ownerEmailRes = await fetch("https://api.resend.com/emails", {
@@ -128,8 +128,8 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!ownerEmailRes.ok) {
-      const errorData = await ownerEmailRes.text();
-      console.error("Failed to send email:", errorData);
+      await ownerEmailRes.text(); // Consume response body
+      console.error("Failed to send email", { status: ownerEmailRes.status });
       throw new Error("Email service error");
     }
 
@@ -186,7 +186,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
   } catch (error: any) {
-    console.error("Error in send-contact-email function:", error);
+    console.error("Error in send-contact-email function", { message: error?.message });
     return new Response(
       JSON.stringify({ error: "Unable to send your message. Please try again later." }),
       {

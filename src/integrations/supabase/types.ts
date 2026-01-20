@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      booking_rate_limits: {
+        Row: {
+          client_email: string
+          request_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          client_email: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          client_email?: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       friend_bookings: {
         Row: {
           activity: string
@@ -192,6 +210,7 @@ export type Database = {
       }
     }
     Functions: {
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
