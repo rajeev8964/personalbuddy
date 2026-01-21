@@ -1,8 +1,22 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+// Allowed origins for CORS
+const ALLOWED_ORIGINS = [
+  "https://personalbuddy.lovable.app",
+  "https://id-preview--8430cbd5-a7f6-45ff-b5f0-91dbe9719eef.lovable.app",
+  "https://8430cbd5-a7f6-45ff-b5f0-91dbe9719eef.lovableproject.com",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+const getCorsHeaders = (origin: string | null) => {
+  const isAllowed = origin && ALLOWED_ORIGINS.some(allowed => 
+    origin === allowed || origin.endsWith(".lovable.app") || origin.endsWith(".lovableproject.com")
+  );
+  return {
+    "Access-Control-Allow-Origin": isAllowed ? origin : ALLOWED_ORIGINS[0],
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  };
 };
 
 const SYSTEM_PROMPT = `You are Buddy, the friendly AI assistant for Rent-A-Buddy - a platform where people can rent a platonic friend for various activities.
@@ -28,6 +42,9 @@ Guidelines:
 - If asked about availability, suggest they submit a booking request`;
 
 serve(async (req) => {
+  const origin = req.headers.get("origin");
+  const corsHeaders = getCorsHeaders(origin);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }

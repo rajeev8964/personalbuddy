@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, Shield } from "lucide-react";
 import { z } from "zod";
+import { Session } from "@supabase/supabase-js";
 
 const authSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -25,10 +26,10 @@ const AdminAuth = () => {
   useEffect(() => {
     // Set up auth listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
+      if (session) {
         // Defer navigation to avoid deadlock
         setTimeout(() => {
-          checkAdminRole(session.user.id);
+          checkAdminRole(session);
         }, 0);
       } else {
         setCheckingAuth(false);
@@ -37,8 +38,8 @@ const AdminAuth = () => {
 
     // Then check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        checkAdminRole(session.user.id);
+      if (session) {
+        checkAdminRole(session);
       } else {
         setCheckingAuth(false);
       }
@@ -47,23 +48,40 @@ const AdminAuth = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  const checkAdminRole = async (userId: string) => {
+  const checkAdminRole = async (session: Session) => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // Use server-side verification via edge function
+      const { data, error } = await supabase.functions.invoke('verify-admin', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
 
-      if (data) {
+      if (!error && data?.isAdmin) {
         navigate('/admin');
       } else {
         setCheckingAuth(false);
       }
     } catch (error) {
       console.error('Error checking admin role:', error);
-      setCheckingAuth(false);
+      // Fallback to client-side check
+      try {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (roleData) {
+          navigate('/admin');
+        } else {
+          setCheckingAuth(false);
+        }
+      } catch (fallbackError) {
+        console.error('Fallback admin check failed:', fallbackError);
+        setCheckingAuth(false);
+      }
     }
   };
 
@@ -85,16 +103,15 @@ const AdminAuth = () => {
 
       if (error) throw error;
 
-      if (data.user) {
-        // Check if user is admin
-        const { data: roleData } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', data.user.id)
-          .eq('role', 'admin')
-          .maybeSingle();
+      if (data.session) {
+        // Check if user is admin via server-side verification
+        const { data: adminData, error: adminError } = await supabase.functions.invoke('verify-admin', {
+          headers: {
+            Authorization: `Bearer ${data.session.access_token}`
+          }
+        });
 
-        if (roleData) {
+        if (!adminError && adminData?.isAdmin) {
           toast.success("Welcome back, Admin!");
           navigate('/admin');
         } else {
