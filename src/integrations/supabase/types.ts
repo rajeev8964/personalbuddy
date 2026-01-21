@@ -103,9 +103,11 @@ export type Database = {
           height: string
           hobbies: string
           id: string
+          is_approved: boolean
           profile_picture_url: string | null
           status: Database["public"]["Enums"]["profile_status"]
           updated_at: string
+          user_id: string | null
           weight: string
         }
         Insert: {
@@ -118,9 +120,11 @@ export type Database = {
           height: string
           hobbies: string
           id?: string
+          is_approved?: boolean
           profile_picture_url?: string | null
           status?: Database["public"]["Enums"]["profile_status"]
           updated_at?: string
+          user_id?: string | null
           weight: string
         }
         Update: {
@@ -133,9 +137,11 @@ export type Database = {
           height?: string
           hobbies?: string
           id?: string
+          is_approved?: boolean
           profile_picture_url?: string | null
           status?: Database["public"]["Enums"]["profile_status"]
           updated_at?: string
+          user_id?: string | null
           weight?: string
         }
         Relationships: []
