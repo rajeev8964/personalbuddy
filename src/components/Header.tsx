@@ -1,7 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, User } from "lucide-react";
+import { Menu, X, User, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -42,12 +48,28 @@ const Header = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost" size="sm" asChild>
-              <Link to="/login">
-                <User className="w-4 h-4 mr-2" />
-                Login
-              </Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <User className="w-4 h-4 mr-2" />
+                  Account
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <Link to="/login" className="cursor-pointer">
+                    <User className="w-4 h-4 mr-2" />
+                    Login / My Bookings
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/create-profile" className="cursor-pointer">
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    Create Profile
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="hero" size="default" asChild>
               <a href="#booking">Let's Hang Out! 👋</a>
             </Button>
@@ -84,6 +106,14 @@ const Header = () => {
               >
                 <User className="w-4 h-4" />
                 Login / My Bookings
+              </Link>
+              <Link
+                to="/create-profile"
+                className="text-muted-foreground hover:text-foreground font-medium transition-colors duration-200 py-2 flex items-center gap-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <UserPlus className="w-4 h-4" />
+                Create Profile
               </Link>
               <Button variant="hero" size="lg" className="mt-2" asChild>
                 <a href="#booking" onClick={() => setIsMenuOpen(false)}>
