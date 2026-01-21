@@ -25,7 +25,7 @@ const Admin = () => {
         navigate('/admin-auth');
       } else {
         setTimeout(() => {
-          verifyAdminAccess(session.user.id);
+          verifyAdminAccess(session);
         }, 0);
       }
     });
@@ -37,25 +37,25 @@ const Admin = () => {
       if (!session?.user) {
         navigate('/admin-auth');
       } else {
-        verifyAdminAccess(session.user.id);
+        verifyAdminAccess(session);
       }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const verifyAdminAccess = async (userId: string) => {
+  const verifyAdminAccess = async (session: Session) => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .eq('role', 'admin')
-        .maybeSingle();
+      // Use server-side verification via edge function
+      const { data, error } = await supabase.functions.invoke('verify-admin', {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
+      });
 
       if (error) throw error;
 
-      if (data) {
+      if (data?.isAdmin) {
         setIsAdmin(true);
       } else {
         toast.error("Access denied. Admin privileges required.");
@@ -64,7 +64,26 @@ const Admin = () => {
       }
     } catch (error) {
       console.error('Error verifying admin:', error);
-      navigate('/admin-auth');
+      // Fallback to client-side check if edge function fails
+      try {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (roleData) {
+          setIsAdmin(true);
+        } else {
+          toast.error("Access denied. Admin privileges required.");
+          await supabase.auth.signOut();
+          navigate('/admin-auth');
+        }
+      } catch (fallbackError) {
+        console.error('Fallback admin check failed:', fallbackError);
+        navigate('/admin-auth');
+      }
     } finally {
       setLoading(false);
     }
