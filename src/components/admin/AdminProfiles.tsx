@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Check, X } from "lucide-react";
 import ProfileFormModal from "./ProfileFormModal";
 import {
   AlertDialog,
@@ -30,6 +30,8 @@ interface FriendProfile {
   bio_data: string;
   profile_picture_url: string | null;
   status: 'available' | 'booked';
+  is_approved: boolean;
+  user_id: string | null;
   created_at: string;
 }
 
@@ -105,6 +107,40 @@ const AdminProfiles = () => {
     }
   };
 
+  const handleApprove = async (profileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('friend_profiles')
+        .update({ is_approved: true })
+        .eq('id', profileId);
+
+      if (error) throw error;
+      
+      toast.success("Profile approved successfully");
+      fetchProfiles();
+    } catch (error) {
+      console.error('Error approving profile:', error);
+      toast.error("Failed to approve profile");
+    }
+  };
+
+  const handleReject = async (profileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('friend_profiles')
+        .update({ is_approved: false })
+        .eq('id', profileId);
+
+      if (error) throw error;
+      
+      toast.success("Profile rejected");
+      fetchProfiles();
+    } catch (error) {
+      console.error('Error rejecting profile:', error);
+      toast.error("Failed to reject profile");
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
@@ -139,7 +175,7 @@ const AdminProfiles = () => {
       ) : (
         <div className="grid gap-4">
           {profiles.map((profile) => (
-            <Card key={profile.id}>
+            <Card key={profile.id} className={!profile.is_approved ? 'border-yellow-500/50' : ''}>
               <CardContent className="p-4">
                 <div className="flex items-start gap-4">
                   <img
@@ -161,9 +197,40 @@ const AdminProfiles = () => {
                           >
                             {profile.status}
                           </Badge>
+                          <Badge 
+                            variant={profile.is_approved ? 'default' : 'outline'}
+                            className={profile.is_approved ? 'bg-blue-500' : 'border-yellow-500 text-yellow-600'}
+                          >
+                            {profile.is_approved ? 'Approved' : 'Pending'}
+                          </Badge>
+                          {profile.user_id && (
+                            <Badge variant="outline" className="text-xs">
+                              User Created
+                            </Badge>
+                          )}
                         </div>
                       </div>
                       <div className="flex gap-2">
+                        {!profile.is_approved && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={() => handleApprove(profile.id)}
+                          >
+                            <Check className="w-4 h-4" />
+                          </Button>
+                        )}
+                        {profile.is_approved && (
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50"
+                            onClick={() => handleReject(profile.id)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
                         <Button variant="outline" size="sm" onClick={() => handleEdit(profile)}>
                           <Pencil className="w-4 h-4" />
                         </Button>
