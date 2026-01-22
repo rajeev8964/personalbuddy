@@ -25,6 +25,7 @@ interface FriendProfile {
   bio_data: string;
   profile_picture_url: string | null;
   status: 'available' | 'booked';
+  email?: string; // Optional - fetched from friend_profiles for notifications
 }
 
 interface FriendBookingModalProps {
@@ -125,7 +126,20 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
 
       if (error) throw error;
 
-      // Send booking confirmation email
+      // Fetch friend's email from friend_profiles for notification
+      let friendEmail: string | null = null;
+      try {
+        const { data: profileData } = await supabase
+          .from('friend_profiles')
+          .select('email')
+          .eq('id', friend.id)
+          .single();
+        friendEmail = profileData?.email || null;
+      } catch (err) {
+        console.error('Could not fetch friend email:', err);
+      }
+
+      // Send booking confirmation email to client, admin, and friend
       try {
         await supabase.functions.invoke('send-booking-email', {
           body: {
@@ -137,7 +151,8 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
             time: formData.time,
             duration: formData.duration,
             message: formData.message,
-            friendName: friend.full_name
+            friendName: friend.full_name,
+            friendEmail: friendEmail
           }
         });
       } catch (emailError) {

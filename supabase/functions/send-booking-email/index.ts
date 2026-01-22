@@ -28,6 +28,8 @@ interface BookingRequest {
   date: string;
   time: string;
   message: string;
+  friendName?: string;
+  friendEmail?: string;
 }
 
 // Simple in-memory rate limiting (resets on function cold start)
@@ -96,6 +98,8 @@ const handler = async (req: Request): Promise<Response> => {
     const date = sanitizeInput(body.date, 50);
     const time = sanitizeInput(body.time, 50);
     const message = sanitizeInput(body.message || '', 1000);
+    const friendName = sanitizeInput(body.friendName || '', 100);
+    const friendEmail = body.friendEmail ? sanitizeInput(body.friendEmail, 254) : null;
 
     // Validate required fields
     if (!name || !email || !activity || !date || !time) {
@@ -113,9 +117,9 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    console.log("Processing booking request", { hasName: !!name, hasActivity: !!activity, hasDate: !!date, hasTime: !!time });
+    console.log("Processing booking request", { hasName: !!name, hasActivity: !!activity, hasDate: !!date, hasTime: !!time, hasFriendEmail: !!friendEmail });
 
-    // Send email to owner
+    // Send email to admin/owner
     const ownerEmailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -125,10 +129,17 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Rent-A-Buddy <onboarding@resend.dev>",
         to: ["rriscrazy@gmail.com"],
-        subject: `🎉 New Booking Request from ${name}!`,
+        subject: `🎉 New Booking Request from ${name}${friendName ? ` for ${friendName}` : ''}!`,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #fff9e6 0%, #e6f3ff 100%); padding: 40px; border-radius: 20px;">
             <h1 style="color: #1a365d; margin-bottom: 24px; font-size: 28px;">🎉 New Booking Request!</h1>
+            
+            ${friendName ? `
+            <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;">
+              <h2 style="color: #e5a91a; margin-top: 0;">Booked Buddy</h2>
+              <p style="margin: 8px 0;"><strong>Name:</strong> ${friendName}</p>
+            </div>
+            ` : ''}
             
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;">
               <h2 style="color: #e5a91a; margin-top: 0;">Customer Details</h2>
@@ -214,6 +225,75 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("Failed to send confirmation email to customer");
     } else {
       console.log("Confirmation email sent to customer successfully");
+    }
+
+    // Send notification email to the friend/buddy being booked (if email provided)
+    if (friendEmail && isValidEmail(friendEmail)) {
+      try {
+        const friendEmailRes = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${RESEND_API_KEY}`,
+          },
+          body: JSON.stringify({
+            from: "Rent-A-Buddy <onboarding@resend.dev>",
+            to: [friendEmail],
+            subject: `🎉 You've Been Booked! New Session Request`,
+            html: `
+              <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #fff9e6 0%, #e6f3ff 100%); padding: 40px; border-radius: 20px;">
+                <h1 style="color: #1a365d; margin-bottom: 24px; font-size: 28px;">Hey ${friendName || 'Buddy'}! 🎉</h1>
+                
+                <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+                  Great news! Someone has booked a session with you. Here are the details:
+                </p>
+                
+                <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 24px 0;">
+                  <h2 style="color: #e5a91a; margin-top: 0;">Customer Details</h2>
+                  <p style="margin: 8px 0;"><strong>Name:</strong> ${name}</p>
+                  <p style="margin: 8px 0;"><strong>Email:</strong> ${email}</p>
+                </div>
+                
+                <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 24px 0;">
+                  <h2 style="color: #e5a91a; margin-top: 0;">Session Details</h2>
+                  <p style="margin: 8px 0;"><strong>Activity:</strong> ${activity}</p>
+                  <p style="margin: 8px 0;"><strong>Date:</strong> ${date}</p>
+                  <p style="margin: 8px 0;"><strong>Time:</strong> ${time}</p>
+                </div>
+                
+                ${message ? `
+                <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+                  <h2 style="color: #e5a91a; margin-top: 0;">Customer's Message</h2>
+                  <p style="margin: 0; color: #4a5568;">${message}</p>
+                </div>
+                ` : ''}
+                
+                <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-top: 24px;">
+                  Please contact the customer at <strong>${email}</strong> to confirm the session!
+                </p>
+                
+                <p style="color: #e5a91a; font-weight: bold; font-size: 18px; margin-top: 24px;">
+                  Have a great session! 🤝
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+                
+                <p style="color: #a0aec0; font-size: 12px; text-align: center;">
+                  This is a notification from Rent-A-Buddy. All activities are conducted in safe, public spaces.
+                </p>
+              </div>
+            `,
+          }),
+        });
+
+        if (!friendEmailRes.ok) {
+          console.error("Failed to send notification email to friend/buddy");
+        } else {
+          console.log("Notification email sent to friend/buddy successfully");
+        }
+      } catch (friendEmailError) {
+        console.error("Error sending email to friend:", friendEmailError);
+      }
     }
 
     return new Response(
