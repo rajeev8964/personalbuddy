@@ -126,6 +126,9 @@ const BuddyDashboard = () => {
   };
 
   const handleBookingAction = async (bookingId: string, newStatus: 'confirmed' | 'cancelled') => {
+    const booking = bookings.find(b => b.id === bookingId);
+    if (!booking) return;
+
     try {
       const { error } = await supabase
         .from('friend_bookings')
@@ -138,6 +141,24 @@ const BuddyDashboard = () => {
         b.id === bookingId ? { ...b, status: newStatus } : b
       ));
       toast.success(`Booking ${newStatus}`);
+
+      // Send email notification to client
+      try {
+        await supabase.functions.invoke('send-booking-status-email', {
+          body: {
+            clientName: booking.client_name,
+            clientEmail: booking.client_email,
+            buddyName: profile?.full_name || 'Your Buddy',
+            activity: booking.activity,
+            date: booking.booking_date,
+            time: booking.booking_time,
+            status: newStatus,
+          },
+        });
+      } catch (emailError) {
+        console.error('Failed to send status email:', emailError);
+        // Don't show error to user - booking was still updated
+      }
     } catch (error: any) {
       console.error('Error updating booking:', error);
       toast.error(error.message || "Failed to update booking");
