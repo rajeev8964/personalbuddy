@@ -125,6 +125,25 @@ const BuddyDashboard = () => {
     }
   };
 
+  const handleBookingAction = async (bookingId: string, newStatus: 'confirmed' | 'cancelled') => {
+    try {
+      const { error } = await supabase
+        .from('friend_bookings')
+        .update({ status: newStatus })
+        .eq('id', bookingId);
+
+      if (error) throw error;
+      
+      setBookings(bookings.map(b => 
+        b.id === bookingId ? { ...b, status: newStatus } : b
+      ));
+      toast.success(`Booking ${newStatus}`);
+    } catch (error: any) {
+      console.error('Error updating booking:', error);
+      toast.error(error.message || "Failed to update booking");
+    }
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     toast.success("Logged out successfully");
@@ -289,7 +308,13 @@ const BuddyDashboard = () => {
                 ) : (
                   <div className="space-y-4">
                     {upcomingBookings.map((booking) => (
-                      <BookingCard key={booking.id} booking={booking} getStatusColor={getStatusColor} />
+                      <BookingCard 
+                        key={booking.id} 
+                        booking={booking} 
+                        getStatusColor={getStatusColor}
+                        onConfirm={() => handleBookingAction(booking.id, 'confirmed')}
+                        onDecline={() => handleBookingAction(booking.id, 'cancelled')}
+                      />
                     ))}
                   </div>
                 )}
@@ -330,48 +355,67 @@ interface BookingCardProps {
   booking: Booking;
   getStatusColor: (status: string) => string;
   isPast?: boolean;
+  onConfirm?: () => void;
+  onDecline?: () => void;
 }
 
-const BookingCard = ({ booking, getStatusColor, isPast }: BookingCardProps) => (
-  <div className={`p-4 border rounded-lg ${isPast ? 'opacity-60' : ''}`}>
-    <div className="flex items-start justify-between mb-3">
-      <div>
-        <h4 className="font-semibold">{booking.client_name}</h4>
-        <p className="text-sm text-muted-foreground">{booking.activity}</p>
+const BookingCard = ({ booking, getStatusColor, isPast, onConfirm, onDecline }: BookingCardProps) => {
+  const showActions = !isPast && booking.status === 'pending' && onConfirm && onDecline;
+  
+  return (
+    <div className={`p-4 border rounded-lg ${isPast ? 'opacity-60' : ''}`}>
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <h4 className="font-semibold">{booking.client_name}</h4>
+          <p className="text-sm text-muted-foreground">{booking.activity}</p>
+        </div>
+        <Badge className={getStatusColor(booking.status)}>
+          {booking.status}
+        </Badge>
       </div>
-      <Badge className={getStatusColor(booking.status)}>
-        {booking.status}
-      </Badge>
-    </div>
-    
-    <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
-      <div className="flex items-center gap-1">
-        <Calendar className="w-4 h-4" />
-        {format(new Date(booking.booking_date), 'PPP')}
+      
+      <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground mb-3">
+        <div className="flex items-center gap-1">
+          <Calendar className="w-4 h-4" />
+          {format(new Date(booking.booking_date), 'PPP')}
+        </div>
+        <div className="flex items-center gap-1">
+          <Clock className="w-4 h-4" />
+          {booking.booking_time} ({booking.duration}h)
+        </div>
       </div>
-      <div className="flex items-center gap-1">
-        <Clock className="w-4 h-4" />
-        {booking.booking_time} ({booking.duration}h)
-      </div>
-    </div>
 
-    <div className="flex flex-wrap gap-3 text-sm">
-      <a href={`mailto:${booking.client_email}`} className="flex items-center gap-1 text-primary hover:underline">
-        <Mail className="w-4 h-4" />
-        {booking.client_email}
-      </a>
-      <a href={`tel:${booking.client_phone}`} className="flex items-center gap-1 text-primary hover:underline">
-        <Phone className="w-4 h-4" />
-        {booking.client_phone}
-      </a>
-    </div>
+      <div className="flex flex-wrap gap-3 text-sm">
+        <a href={`mailto:${booking.client_email}`} className="flex items-center gap-1 text-primary hover:underline">
+          <Mail className="w-4 h-4" />
+          {booking.client_email}
+        </a>
+        <a href={`tel:${booking.client_phone}`} className="flex items-center gap-1 text-primary hover:underline">
+          <Phone className="w-4 h-4" />
+          {booking.client_phone}
+        </a>
+      </div>
 
-    {booking.message && (
-      <p className="mt-3 text-sm text-muted-foreground border-t pt-3">
-        "{booking.message}"
-      </p>
-    )}
-  </div>
-);
+      {booking.message && (
+        <p className="mt-3 text-sm text-muted-foreground border-t pt-3">
+          "{booking.message}"
+        </p>
+      )}
+
+      {showActions && (
+        <div className="flex gap-2 mt-4 pt-3 border-t">
+          <Button size="sm" onClick={onConfirm} className="flex-1">
+            <CheckCircle className="w-4 h-4 mr-1" />
+            Confirm
+          </Button>
+          <Button size="sm" variant="outline" onClick={onDecline} className="flex-1">
+            <XCircle className="w-4 h-4 mr-1" />
+            Decline
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default BuddyDashboard;
