@@ -1,0 +1,292 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Quicksand:wght@400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    /* Warm cream background */
+    --background: 45 40% 97%;
+    --foreground: 220 30% 20%;
+
+    /* Card surfaces */
+    --card: 45 30% 99%;
+    --card-foreground: 220 30% 20%;
+
+    --popover: 45 30% 99%;
+    --popover-foreground: 220 30% 20%;
+
+    /* Warm yellow primary - friendly & welcoming */
+    --primary: 42 95% 55%;
+    --primary-foreground: 220 30% 15%;
+
+    /* Soft blue secondary - trustworthy */
+    --secondary: 210 60% 92%;
+    --secondary-foreground: 210 50% 30%;
+
+    /* Muted tones */
+    --muted: 45 25% 93%;
+    --muted-foreground: 220 15% 45%;
+
+    /* Soft coral accent */
+    --accent: 15 85% 92%;
+    --accent-foreground: 15 60% 35%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 45 20% 88%;
+    --input: 45 20% 88%;
+    --ring: 42 95% 55%;
+
+    --radius: 1rem;
+
+    /* Custom tokens */
+    --gradient-warm: linear-gradient(135deg, hsl(42, 95%, 55%) 0%, hsl(30, 90%, 60%) 100%);
+    --gradient-sky: linear-gradient(135deg, hsl(200, 70%, 50%) 0%, hsl(210, 60%, 60%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(45, 40%, 97%) 0%, hsl(45, 50%, 94%) 100%);
+    --shadow-soft: 0 4px 20px -4px hsl(220 30% 20% / 0.08);
+    --shadow-warm: 0 8px 30px -8px hsl(42 95% 55% / 0.25);
+    --shadow-card: 0 2px 16px -2px hsl(220 30% 20% / 0.06);
+
+    /* Sidebar defaults */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 220 25% 10%;
+    --foreground: 45 30% 95%;
+
+    --card: 220 25% 12%;
+    --card-foreground: 45 30% 95%;
+
+    --popover: 220 25% 12%;
+    --popover-foreground: 45 30% 95%;
+
+    --primary: 42 90% 50%;
+    --primary-foreground: 220 30% 10%;
+
+    --secondary: 210 30% 20%;
+    --secondary-foreground: 210 40% 85%;
+
+    --muted: 220 20% 18%;
+    --muted-foreground: 220 15% 60%;
+
+    --accent: 15 40% 20%;
+    --accent-foreground: 15 60% 85%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 20% 20%;
+    --input: 220 20% 20%;
+    --ring: 42 90% 50%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-display font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .text-gradient-warm {
+    background: var(--gradient-warm);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-gradient-warm {
+    background: var(--gradient-warm);
+  }
+
+  .bg-gradient-sky {
+    background: var(--gradient-sky);
+  }
+
+  .bg-gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
+  }
+
+  .shadow-warm {
+    box-shadow: var(--shadow-warm);
+  }
+
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+
+  /* 3D Shadow Effects */
+  .shadow-3d {
+    box-shadow: 
+      0 4px 6px -1px hsl(220 30% 20% / 0.1),
+      0 10px 15px -3px hsl(220 30% 20% / 0.1),
+      0 20px 25px -5px hsl(220 30% 20% / 0.08),
+      0 25px 50px -12px hsl(220 30% 20% / 0.15);
+  }
+
+  .shadow-3d-sm {
+    box-shadow: 
+      0 2px 4px -1px hsl(220 30% 20% / 0.08),
+      0 4px 6px -1px hsl(220 30% 20% / 0.08),
+      0 8px 10px -3px hsl(220 30% 20% / 0.05);
+  }
+
+  .shadow-3d-hover {
+    box-shadow: 
+      0 8px 12px -2px hsl(220 30% 20% / 0.12),
+      0 16px 24px -4px hsl(220 30% 20% / 0.12),
+      0 32px 40px -8px hsl(220 30% 20% / 0.1),
+      0 40px 60px -16px hsl(220 30% 20% / 0.2);
+  }
+
+  .shadow-inner-3d {
+    box-shadow: 
+      inset 0 2px 4px 0 hsl(220 30% 20% / 0.06),
+      inset 0 1px 2px 0 hsl(220 30% 20% / 0.04);
+  }
+
+  /* 3D Transform */
+  .transform-3d {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+
+  .text-shadow-3d {
+    text-shadow: 
+      0 1px 0 hsl(220 30% 90%),
+      0 2px 0 hsl(220 30% 85%),
+      0 3px 0 hsl(220 30% 80%),
+      0 4px 8px hsl(220 30% 20% / 0.15);
+  }
+}
+
+/* 3D Animations */
+@keyframes float-3d {
+  0%, 100% {
+    transform: translateY(0) translateZ(0) rotateX(0);
+  }
+  50% {
+    transform: translateY(-20px) translateZ(20px) rotateX(5deg);
+  }
+}
+
+@keyframes bounce-3d {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-10px) scale(1.05);
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(20deg);
+  }
+  75% {
+    transform: rotate(-20deg);
+  }
+}
+
+@keyframes pulse-soft {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float-3d {
+  animation: float-3d 6s ease-in-out infinite;
+}
+
+.animate-bounce-3d {
+  animation: bounce-3d 2s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 20s linear infinite;
+}
+
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+
+.animate-wave {
+  animation: wave 1.5s ease-in-out infinite;
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 4s ease-in-out infinite;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out both;
+}

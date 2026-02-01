@@ -1,0 +1,13 @@
+project_id = "jstxmooexlwqzpekkybi"
+
+[functions.chat]
+verify_jwt = false
+
+[functions.send-booking-email]
+verify_jwt = false
+
+[functions.send-contact-email]
+verify_jwt = false
+
+[functions.verify-admin]
+verify_jwt = false
