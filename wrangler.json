@@ -1,0 +1,31 @@
+{
+  "name": "personalbuddy",
+  "type": "javascript",
+  "account_id": "b69d439cdd98fd8ba60d4e0b18965625",
+  "workers_dev": true,
+  "compatibility_date": "2026-02-01",
+  "routes": [
+    {
+      "pattern": "https://personalbuddy.example.com/*",
+      "zone_id": "805ef293ee4a2e3f57bd079463999fd0"
+    }
+  ],
+  "build": {
+    "command": "npm run build",
+    "cwd": "./",
+    "upload": {
+      "format": "service-worker"
+    }
+  },
+  "env": {
+    "production": {
+      "workers_dev": false,
+      "routes": [
+        {
+          "pattern": "https://personalbuddy.example.com/*",
+          "zone_id": "805ef293ee4a2e3f57bd079463999fd0"
+        }
+      ]
+    }
+  }
+}
