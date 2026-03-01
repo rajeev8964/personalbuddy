@@ -8,6 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, LogOut, Calendar, Clock, User, ArrowLeft, Mail, Phone, Edit, CheckCircle, XCircle } from "lucide-react";
+import CustomerPhotoGallery from "@/components/CustomerPhotoGallery";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { format } from "date-fns";
 
@@ -364,6 +365,11 @@ const BuddyDashboard = () => {
                   </div>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Customer Photo Gallery */}
+            {profile && (
+              <CustomerPhotoGallery profileId={profile.id} />
             )}
           </div>
         </div>
