@@ -10,7 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CalendarIcon, Loader2, CheckCircle2 } from "lucide-react";
+import { CalendarIcon, Loader2, CheckCircle2, ImagePlus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import buddyPhoto from "@/assets/buddy-photo.jpeg";
 
@@ -64,6 +64,8 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
     duration: '1',
     message: ''
   });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const handleInputChange = (field: string, value: string | Date | undefined) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -103,13 +105,25 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
     }
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Photo must be under 5MB");
+        return;
+      }
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
+    }
+  };
+
   const handleConfirmBooking = async () => {
     if (!friend) return;
     
     setLoading(true);
     try {
       // Insert booking into database
-      const { error } = await supabase
+      const { data: bookingData, error } = await supabase
         .from('friend_bookings')
         .insert({
           friend_id: friend.id,
@@ -122,9 +136,32 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
           duration: parseInt(formData.duration),
           message: formData.message || null,
           status: 'pending'
-        });
+        })
+        .select('id')
+        .single();
 
       if (error) throw error;
+
+      // Upload photo if provided
+      if (photoFile && bookingData) {
+        const fileExt = photoFile.name.split('.').pop();
+        const filePath = `${bookingData.id}/${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('customer-photos')
+          .upload(filePath, photoFile);
+
+        if (!uploadError) {
+          const { data: urlData } = supabase.storage
+            .from('customer-photos')
+            .getPublicUrl(filePath);
+
+          await supabase.from('booking_photos').insert({
+            booking_id: bookingData.id,
+            photo_url: urlData.publicUrl,
+          });
+        }
+      }
 
       // Fetch friend's email from friend_profiles for notification
       let friendEmail: string | null = null;
@@ -182,6 +219,8 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
       duration: '1',
       message: ''
     });
+    setPhotoFile(null);
+    setPhotoPreview(null);
     onClose();
     if (step === 'success') {
       onSuccess();
@@ -324,6 +363,29 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Your Photo (Optional)</Label>
+                <p className="text-xs text-muted-foreground">Upload a photo so the buddy can see you</p>
+                {photoPreview ? (
+                  <div className="relative w-24 h-24">
+                    <img src={photoPreview} alt="Preview" className="w-24 h-24 rounded-lg object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}
+                      className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full w-5 h-5 flex items-center justify-center"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex items-center gap-2 p-3 border border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                    <ImagePlus className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Click to upload</span>
+                    <input type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
+                  </label>
+                )}
               </div>
 
               <div className="space-y-2">
