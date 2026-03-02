@@ -28,27 +28,38 @@ interface ContactRequest {
   message: string;
 }
 
-// Simple in-memory rate limiting
+// Dual rate limiting: by IP and by email
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT = 5;
+const IP_RATE_LIMIT = 5;
+const EMAIL_RATE_LIMIT = 3;
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
-const isRateLimited = (ip: string): boolean => {
+const isRateLimited = (key: string, limit: number): boolean => {
   const now = Date.now();
-  const record = rateLimitMap.get(ip);
+  const record = rateLimitMap.get(key);
   
   if (!record || now > record.resetTime) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_WINDOW_MS });
+    rateLimitMap.set(key, { count: 1, resetTime: now + RATE_WINDOW_MS });
     return false;
   }
   
-  if (record.count >= RATE_LIMIT) {
+  if (record.count >= limit) {
     return true;
   }
   
   record.count++;
   return false;
 };
+
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of rateLimitMap) {
+    if (now > val.resetTime) {
+      rateLimitMap.delete(key);
+    }
+  }
+}, 60000);
 
 // Basic email validation
 const isValidEmail = (email: string): boolean => {
@@ -75,8 +86,8 @@ const handler = async (req: Request): Promise<Response> => {
                      req.headers.get("cf-connecting-ip") || 
                      "unknown";
     
-    if (isRateLimited(clientIP)) {
-      console.warn(`Rate limit exceeded for IP: ${clientIP}`);
+    if (isRateLimited(`ip:${clientIP}`, IP_RATE_LIMIT)) {
+      console.warn(`IP rate limit exceeded: ${clientIP}`);
       return new Response(
         JSON.stringify({ error: "Too many requests. Please try again later." }),
         { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
@@ -104,6 +115,15 @@ const handler = async (req: Request): Promise<Response> => {
       return new Response(
         JSON.stringify({ error: "Please provide a valid email address." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
+
+    // Email-based rate limiting (prevents abuse even with IP rotation)
+    if (isRateLimited(`email:${email.toLowerCase().trim()}`, EMAIL_RATE_LIMIT)) {
+      console.warn(`Email rate limit exceeded: ${email}`);
+      return new Response(
+        JSON.stringify({ error: "Too many requests from this email. Please try again later." }),
+        { status: 429, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
 
