@@ -160,20 +160,8 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
         }
       }
 
-      // Fetch friend's email from friend_profiles for notification
-      let friendEmail: string | null = null;
-      try {
-        const { data: profileData } = await supabase
-          .from('friend_profiles')
-          .select('email')
-          .eq('id', friend.id)
-          .single();
-        friendEmail = profileData?.email || null;
-      } catch (err) {
-        console.error('Could not fetch friend email:', err);
-      }
-
       // Send booking confirmation email to client, admin, and friend
+      // Friend email is looked up server-side to avoid exposing it to the client
       try {
         await supabase.functions.invoke('send-booking-email', {
           body: {
@@ -186,7 +174,7 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
             duration: formData.duration,
             message: formData.message,
             friendName: friend.full_name,
-            friendEmail: friendEmail
+            friendId: friend.id
           }
         });
       } catch (emailError) {
