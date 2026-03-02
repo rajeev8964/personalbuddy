@@ -16,7 +16,7 @@ interface CustomerPhotoGalleryProps {
 }
 
 const CustomerPhotoGallery = ({ profileId }: CustomerPhotoGalleryProps) => {
-  const [photos, setPhotos] = useState<(BookingPhoto & { client_name?: string; activity?: string })[]>([]);
+  const [photos, setPhotos] = useState<(BookingPhoto & { client_name?: string; activity?: string; signedUrl?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
@@ -44,9 +44,21 @@ const CustomerPhotoGallery = ({ profileId }: CustomerPhotoGalleryProps) => {
         .in('booking_id', bookingIds)
         .order('uploaded_at', { ascending: false });
 
-      const enriched = (photosData || []).map(photo => {
+      if (!photosData?.length) {
+        setLoading(false);
+        return;
+      }
+
+      // Generate signed URLs for all photos (1 hour expiry)
+      const photoPaths = photosData.map(p => p.photo_url);
+      const { data: signedUrls } = await supabase.storage
+        .from('customer-photos')
+        .createSignedUrls(photoPaths, 3600);
+
+      const enriched = photosData.map((photo, index) => {
         const booking = bookings.find(b => b.id === photo.booking_id);
-        return { ...photo, client_name: booking?.client_name, activity: booking?.activity };
+        const signedUrl = signedUrls?.[index]?.signedUrl || '';
+        return { ...photo, client_name: booking?.client_name, activity: booking?.activity, signedUrl };
       });
 
       setPhotos(enriched);
@@ -88,10 +100,10 @@ const CustomerPhotoGallery = ({ profileId }: CustomerPhotoGalleryProps) => {
                 <div
                   key={photo.id}
                   className="group relative cursor-pointer rounded-lg overflow-hidden aspect-square"
-                  onClick={() => setSelectedPhoto(photo.photo_url)}
+                  onClick={() => setSelectedPhoto(photo.signedUrl || '')}
                 >
                   <img
-                    src={photo.photo_url}
+                    src={photo.signedUrl || ''}
                     alt={photo.client_name || "Customer"}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     loading="lazy"
