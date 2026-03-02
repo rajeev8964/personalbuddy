@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.89.0";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // Allowed origins for CORS
 const ALLOWED_ORIGINS = [
@@ -21,20 +24,9 @@ const getCorsHeaders = (origin: string | null) => {
   };
 };
 
-interface BookingRequest {
-  name: string;
-  email: string;
-  activity: string;
-  date: string;
-  time: string;
-  message: string;
-  friendName?: string;
-  friendEmail?: string;
-}
-
 // Simple in-memory rate limiting (resets on function cold start)
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
-const RATE_LIMIT = 3; // requests per window
+const RATE_LIMIT = 3;
 const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
 
 const isRateLimited = (ip: string): boolean => {
@@ -66,6 +58,11 @@ const sanitizeInput = (input: string, maxLength: number = 500): string => {
   return input.slice(0, maxLength).replace(/<[^>]*>/g, '');
 };
 
+// UUID validation
+const isValidUUID = (id: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+};
+
 const handler = async (req: Request): Promise<Response> => {
   const origin = req.headers.get("origin");
   const corsHeaders = getCorsHeaders(origin);
@@ -80,7 +77,6 @@ const handler = async (req: Request): Promise<Response> => {
                      req.headers.get("cf-connecting-ip") || 
                      "unknown";
     
-    // Check rate limit
     if (isRateLimited(clientIP)) {
       console.warn(`Rate limit exceeded for IP: ${clientIP}`);
       return new Response(
@@ -99,7 +95,7 @@ const handler = async (req: Request): Promise<Response> => {
     const time = sanitizeInput(body.time, 50);
     const message = sanitizeInput(body.message || '', 1000);
     const friendName = sanitizeInput(body.friendName || '', 100);
-    const friendEmail = body.friendEmail ? sanitizeInput(body.friendEmail, 254) : null;
+    const friendId = body.friendId ? sanitizeInput(body.friendId, 36) : null;
 
     // Validate required fields
     if (!name || !email || !activity || !date || !time) {
@@ -115,6 +111,22 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Please provide a valid email address." }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
+    }
+
+    // Look up friend email server-side using service role (bypasses RLS)
+    let friendEmail: string | null = null;
+    if (friendId && isValidUUID(friendId)) {
+      try {
+        const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: profileData } = await supabaseAdmin
+          .from('friend_profiles')
+          .select('email')
+          .eq('id', friendId)
+          .single();
+        friendEmail = profileData?.email || null;
+      } catch (err) {
+        console.error("Could not fetch friend email server-side");
+      }
     }
 
     console.log("Processing booking request", { hasName: !!name, hasActivity: !!activity, hasDate: !!date, hasTime: !!time, hasFriendEmail: !!friendEmail });
@@ -170,7 +182,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     if (!ownerEmailRes.ok) {
-      await ownerEmailRes.text(); // Consume response body
+      await ownerEmailRes.text();
       console.error("Failed to send email to owner", { status: ownerEmailRes.status });
       throw new Error("Email service error");
     }
@@ -227,7 +239,7 @@ const handler = async (req: Request): Promise<Response> => {
       console.log("Confirmation email sent to customer successfully");
     }
 
-    // Send notification email to the friend/buddy being booked (if email provided)
+    // Send notification email to the friend/buddy being booked
     if (friendEmail && isValidEmail(friendEmail)) {
       try {
         const friendEmailRes = await fetch("https://api.resend.com/emails", {
@@ -305,7 +317,6 @@ const handler = async (req: Request): Promise<Response> => {
     );
   } catch (error: any) {
     console.error("Error in send-booking-email function", { message: error?.message });
-    // Return generic error message - don't expose internal details
     return new Response(
       JSON.stringify({ error: "Unable to process your booking request. Please try again later." }),
       {
