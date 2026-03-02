@@ -152,13 +152,10 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
           .upload(filePath, photoFile);
 
         if (!uploadError) {
-          const { data: urlData } = supabase.storage
-            .from('customer-photos')
-            .getPublicUrl(filePath);
-
+          // Store the storage path (not a full URL) for use with signed URLs
           await supabase.from('booking_photos').insert({
             booking_id: bookingData.id,
-            photo_url: urlData.publicUrl,
+            photo_url: filePath,
           });
         }
       }
