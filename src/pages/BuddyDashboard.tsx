@@ -147,12 +147,7 @@ const BuddyDashboard = () => {
       try {
         await supabase.functions.invoke('send-booking-status-email', {
           body: {
-            clientName: booking.client_name,
-            clientEmail: booking.client_email,
-            buddyName: profile?.full_name || 'Your Buddy',
-            activity: booking.activity,
-            date: booking.booking_date,
-            time: booking.booking_time,
+            bookingId,
             status: newStatus,
           },
         });
