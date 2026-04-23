@@ -58,6 +58,15 @@ const sanitizeInput = (input: string, maxLength: number = 500): string => {
   return input.slice(0, maxLength).replace(/<[^>]*>/g, '');
 };
 
+// Escape HTML entities to prevent injection in email body
+const escapeHtml = (s: string): string =>
+  String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 // UUID validation
 const isValidUUID = (id: string): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
@@ -131,6 +140,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Processing booking request", { hasName: !!name, hasActivity: !!activity, hasDate: !!date, hasTime: !!time, hasFriendEmail: !!friendEmail });
 
+    // HTML-escape values used in email templates to prevent injection
+    const eName = escapeHtml(name);
+    const eEmail = escapeHtml(email);
+    const eActivity = escapeHtml(activity);
+    const eDate = escapeHtml(date);
+    const eTime = escapeHtml(time);
+    const eMessage = escapeHtml(message);
+    const eFriendName = escapeHtml(friendName);
+
     // Send email to admin/owner
     const ownerEmailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -141,7 +159,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Rent-A-Buddy <onboarding@resend.dev>",
         to: ["rriscrazy@gmail.com"],
-        subject: `🎉 New Booking Request from ${name}${friendName ? ` for ${friendName}` : ''}!`,
+        subject: `🎉 New Booking Request from ${eName}${friendName ? ` for ${eFriendName}` : ''}!`,
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #fff9e6 0%, #e6f3ff 100%); padding: 40px; border-radius: 20px;">
             <h1 style="color: #1a365d; margin-bottom: 24px; font-size: 28px;">🎉 New Booking Request!</h1>
@@ -149,32 +167,32 @@ const handler = async (req: Request): Promise<Response> => {
             ${friendName ? `
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;">
               <h2 style="color: #e5a91a; margin-top: 0;">Booked Buddy</h2>
-              <p style="margin: 8px 0;"><strong>Name:</strong> ${friendName}</p>
+              <p style="margin: 8px 0;"><strong>Name:</strong> ${eFriendName}</p>
             </div>
             ` : ''}
             
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;">
               <h2 style="color: #e5a91a; margin-top: 0;">Customer Details</h2>
-              <p style="margin: 8px 0;"><strong>Name:</strong> ${name}</p>
-              <p style="margin: 8px 0;"><strong>Email:</strong> ${email}</p>
+              <p style="margin: 8px 0;"><strong>Name:</strong> ${eName}</p>
+              <p style="margin: 8px 0;"><strong>Email:</strong> ${eEmail}</p>
             </div>
             
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;">
               <h2 style="color: #e5a91a; margin-top: 0;">Booking Details</h2>
-              <p style="margin: 8px 0;"><strong>Activity:</strong> ${activity}</p>
-              <p style="margin: 8px 0;"><strong>Date:</strong> ${date}</p>
-              <p style="margin: 8px 0;"><strong>Time:</strong> ${time}</p>
+              <p style="margin: 8px 0;"><strong>Activity:</strong> ${eActivity}</p>
+              <p style="margin: 8px 0;"><strong>Date:</strong> ${eDate}</p>
+              <p style="margin: 8px 0;"><strong>Time:</strong> ${eTime}</p>
             </div>
             
             ${message ? `
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
               <h2 style="color: #e5a91a; margin-top: 0;">Additional Message</h2>
-              <p style="margin: 0; color: #4a5568;">${message}</p>
+              <p style="margin: 0; color: #4a5568;">${eMessage}</p>
             </div>
             ` : ''}
             
             <p style="color: #718096; margin-top: 24px; text-align: center;">
-              Reply to this email or contact ${email} to confirm the booking!
+              Reply to this email or contact ${eEmail} to confirm the booking!
             </p>
           </div>
         `,
@@ -202,7 +220,7 @@ const handler = async (req: Request): Promise<Response> => {
         subject: "Your Booking Request Received! 🎉",
         html: `
           <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #fff9e6 0%, #e6f3ff 100%); padding: 40px; border-radius: 20px;">
-            <h1 style="color: #1a365d; margin-bottom: 24px; font-size: 28px;">Hey ${name}! 👋</h1>
+            <h1 style="color: #1a365d; margin-bottom: 24px; font-size: 28px;">Hey ${eName}! 👋</h1>
             
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
               Thanks for reaching out! I've received your booking request and I'm excited to potentially hang out with you!
@@ -210,9 +228,9 @@ const handler = async (req: Request): Promise<Response> => {
             
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 24px 0;">
               <h2 style="color: #e5a91a; margin-top: 0;">Your Request Summary</h2>
-              <p style="margin: 8px 0;"><strong>Activity:</strong> ${activity}</p>
-              <p style="margin: 8px 0;"><strong>Preferred Date:</strong> ${date}</p>
-              <p style="margin: 8px 0;"><strong>Preferred Time:</strong> ${time}</p>
+              <p style="margin: 8px 0;"><strong>Activity:</strong> ${eActivity}</p>
+              <p style="margin: 8px 0;"><strong>Preferred Date:</strong> ${eDate}</p>
+              <p style="margin: 8px 0;"><strong>Preferred Time:</strong> ${eTime}</p>
             </div>
             
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
@@ -254,7 +272,7 @@ const handler = async (req: Request): Promise<Response> => {
             subject: `🎉 You've Been Booked! New Session Request`,
             html: `
               <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #fff9e6 0%, #e6f3ff 100%); padding: 40px; border-radius: 20px;">
-                <h1 style="color: #1a365d; margin-bottom: 24px; font-size: 28px;">Hey ${friendName || 'Buddy'}! 🎉</h1>
+                <h1 style="color: #1a365d; margin-bottom: 24px; font-size: 28px;">Hey ${eFriendName || 'Buddy'}! 🎉</h1>
                 
                 <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
                   Great news! Someone has booked a session with you. Here are the details:
@@ -262,26 +280,26 @@ const handler = async (req: Request): Promise<Response> => {
                 
                 <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 24px 0;">
                   <h2 style="color: #e5a91a; margin-top: 0;">Customer Details</h2>
-                  <p style="margin: 8px 0;"><strong>Name:</strong> ${name}</p>
-                  <p style="margin: 8px 0;"><strong>Email:</strong> ${email}</p>
+                  <p style="margin: 8px 0;"><strong>Name:</strong> ${eName}</p>
+                  <p style="margin: 8px 0;"><strong>Email:</strong> ${eEmail}</p>
                 </div>
                 
                 <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin: 24px 0;">
                   <h2 style="color: #e5a91a; margin-top: 0;">Session Details</h2>
-                  <p style="margin: 8px 0;"><strong>Activity:</strong> ${activity}</p>
-                  <p style="margin: 8px 0;"><strong>Date:</strong> ${date}</p>
-                  <p style="margin: 8px 0;"><strong>Time:</strong> ${time}</p>
+                  <p style="margin: 8px 0;"><strong>Activity:</strong> ${eActivity}</p>
+                  <p style="margin: 8px 0;"><strong>Date:</strong> ${eDate}</p>
+                  <p style="margin: 8px 0;"><strong>Time:</strong> ${eTime}</p>
                 </div>
                 
                 ${message ? `
                 <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
                   <h2 style="color: #e5a91a; margin-top: 0;">Customer's Message</h2>
-                  <p style="margin: 0; color: #4a5568;">${message}</p>
+                  <p style="margin: 0; color: #4a5568;">${eMessage}</p>
                 </div>
                 ` : ''}
                 
                 <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-top: 24px;">
-                  Please contact the customer at <strong>${email}</strong> to confirm the session!
+                  Please contact the customer at <strong>${eEmail}</strong> to confirm the session!
                 </p>
                 
                 <p style="color: #e5a91a; font-weight: bold; font-size: 18px; margin-top: 24px;">
