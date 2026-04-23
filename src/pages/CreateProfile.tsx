@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, LogOut, ArrowLeft, CheckCircle, Clock, User } from "lucide-react";
+import { Loader2, LogOut, ArrowLeft, CheckCircle, Clock, User, Upload, X } from "lucide-react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 
@@ -32,6 +32,8 @@ const CreateProfile = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [existingProfile, setExistingProfile] = useState<ExistingProfile | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
