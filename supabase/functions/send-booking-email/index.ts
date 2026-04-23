@@ -140,6 +140,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Processing booking request", { hasName: !!name, hasActivity: !!activity, hasDate: !!date, hasTime: !!time, hasFriendEmail: !!friendEmail });
 
+    // HTML-escape values used in email templates to prevent injection
+    const eName = escapeHtml(name);
+    const eEmail = escapeHtml(email);
+    const eActivity = escapeHtml(activity);
+    const eDate = escapeHtml(date);
+    const eTime = escapeHtml(time);
+    const eMessage = escapeHtml(message);
+    const eFriendName = escapeHtml(friendName);
+
     // Send email to admin/owner
     const ownerEmailRes = await fetch("https://api.resend.com/emails", {
       method: "POST",
