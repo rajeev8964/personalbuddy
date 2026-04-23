@@ -415,15 +415,66 @@ const CreateProfile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="profile_picture_url">Profile Picture URL</Label>
-                <Input
-                  id="profile_picture_url"
-                  value={formData.profile_picture_url}
-                  onChange={(e) => handleChange('profile_picture_url', e.target.value)}
-                  placeholder="https://example.com/your-photo.jpg"
-                  disabled={existingProfile?.is_approved}
+                <Label htmlFor="profile_picture">Profile Picture</Label>
+                <input
+                  ref={fileInputRef}
+                  id="profile_picture"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                  disabled={existingProfile?.is_approved || uploading}
                 />
-                <p className="text-xs text-muted-foreground">Leave empty for default photo</p>
+                {formData.profile_picture_url ? (
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={formData.profile_picture_url}
+                      alt="Profile preview"
+                      className="w-24 h-24 rounded-lg object-cover border border-border"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={existingProfile?.is_approved || uploading}
+                      >
+                        {uploading ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</>
+                        ) : (
+                          <><Upload className="w-4 h-4 mr-2" />Change Photo</>
+                        )}
+                      </Button>
+                      {!existingProfile?.is_approved && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemovePhoto}
+                          disabled={uploading}
+                        >
+                          <X className="w-4 h-4 mr-2" />Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={existingProfile?.is_approved || uploading}
+                    className="w-full h-24 border-dashed flex-col gap-2"
+                  >
+                    {uploading ? (
+                      <><Loader2 className="w-6 h-6 animate-spin" /><span>Uploading...</span></>
+                    ) : (
+                      <><Upload className="w-6 h-6" /><span>Tap to upload from gallery</span></>
+                    )}
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground">JPG, PNG, WebP or GIF (max 5MB). Leave empty for default photo.</p>
               </div>
 
               {existingProfile?.is_approved ? (
