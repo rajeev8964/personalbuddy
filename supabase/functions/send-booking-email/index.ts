@@ -58,6 +58,15 @@ const sanitizeInput = (input: string, maxLength: number = 500): string => {
   return input.slice(0, maxLength).replace(/<[^>]*>/g, '');
 };
 
+// Escape HTML entities to prevent injection in email body
+const escapeHtml = (s: string): string =>
+  String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 // UUID validation
 const isValidUUID = (id: string): boolean => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
