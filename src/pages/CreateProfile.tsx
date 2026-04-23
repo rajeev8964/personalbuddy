@@ -115,10 +115,6 @@ const CreateProfile = () => {
       toast.error('Please select an image file');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be smaller than 5MB');
-      return;
-    }
 
     setUploading(true);
     try {
@@ -474,7 +470,7 @@ const CreateProfile = () => {
                     )}
                   </Button>
                 )}
-                <p className="text-xs text-muted-foreground">JPG, PNG, WebP or GIF (max 5MB). Leave empty for default photo.</p>
+                <p className="text-xs text-muted-foreground">JPG, PNG, WebP or GIF — any size. Leave empty for default photo.</p>
               </div>
 
               {existingProfile?.is_approved ? (
