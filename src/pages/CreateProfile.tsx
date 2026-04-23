@@ -115,10 +115,6 @@ const CreateProfile = () => {
       toast.error('Please select an image file');
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image must be smaller than 5MB');
-      return;
-    }
 
     setUploading(true);
     try {
