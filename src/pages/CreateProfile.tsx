@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, LogOut, ArrowLeft, CheckCircle, Clock, User } from "lucide-react";
+import { Loader2, LogOut, ArrowLeft, CheckCircle, Clock, User, Upload, X } from "lucide-react";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { Badge } from "@/components/ui/badge";
 
@@ -32,6 +32,8 @@ const CreateProfile = () => {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [existingProfile, setExistingProfile] = useState<ExistingProfile | null>(null);
   const [formData, setFormData] = useState({
     full_name: '',
@@ -103,6 +105,49 @@ const CreateProfile = () => {
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image must be smaller than 5MB');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const ext = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const filePath = `${user.id}/${Date.now()}.${ext}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('profile-photos')
+        .upload(filePath, file, { upsert: true, contentType: file.type });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('profile-photos')
+        .getPublicUrl(filePath);
+
+      setFormData(prev => ({ ...prev, profile_picture_url: publicUrl }));
+      toast.success('Photo uploaded successfully');
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast.error(error.message || 'Failed to upload photo');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setFormData(prev => ({ ...prev, profile_picture_url: '' }));
   };
 
   const validateForm = () => {
@@ -370,15 +415,66 @@ const CreateProfile = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="profile_picture_url">Profile Picture URL</Label>
-                <Input
-                  id="profile_picture_url"
-                  value={formData.profile_picture_url}
-                  onChange={(e) => handleChange('profile_picture_url', e.target.value)}
-                  placeholder="https://example.com/your-photo.jpg"
-                  disabled={existingProfile?.is_approved}
+                <Label htmlFor="profile_picture">Profile Picture</Label>
+                <input
+                  ref={fileInputRef}
+                  id="profile_picture"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                  disabled={existingProfile?.is_approved || uploading}
                 />
-                <p className="text-xs text-muted-foreground">Leave empty for default photo</p>
+                {formData.profile_picture_url ? (
+                  <div className="flex items-center gap-4">
+                    <img
+                      src={formData.profile_picture_url}
+                      alt="Profile preview"
+                      className="w-24 h-24 rounded-lg object-cover border border-border"
+                    />
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={existingProfile?.is_approved || uploading}
+                      >
+                        {uploading ? (
+                          <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Uploading...</>
+                        ) : (
+                          <><Upload className="w-4 h-4 mr-2" />Change Photo</>
+                        )}
+                      </Button>
+                      {!existingProfile?.is_approved && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleRemovePhoto}
+                          disabled={uploading}
+                        >
+                          <X className="w-4 h-4 mr-2" />Remove
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={existingProfile?.is_approved || uploading}
+                    className="w-full h-24 border-dashed flex-col gap-2"
+                  >
+                    {uploading ? (
+                      <><Loader2 className="w-6 h-6 animate-spin" /><span>Uploading...</span></>
+                    ) : (
+                      <><Upload className="w-6 h-6" /><span>Tap to upload from gallery</span></>
+                    )}
+                  </Button>
+                )}
+                <p className="text-xs text-muted-foreground">JPG, PNG, WebP or GIF (max 5MB). Leave empty for default photo.</p>
               </div>
 
               {existingProfile?.is_approved ? (
