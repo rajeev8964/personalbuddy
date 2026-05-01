@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.verify-admin]
 verify_jwt = false
+
+[functions.handle-action]
+verify_jwt = false
+
+[functions.send-profile-approval-email]
+verify_jwt = false
