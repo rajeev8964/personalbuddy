@@ -174,7 +174,8 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
             duration: formData.duration,
             message: formData.message,
             friendName: friend.full_name,
-            friendId: friend.id
+            friendId: friend.id,
+            bookingId: bookingData.id,
           }
         });
       } catch (emailError) {
