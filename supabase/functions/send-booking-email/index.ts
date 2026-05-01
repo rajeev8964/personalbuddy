@@ -105,6 +105,8 @@ const handler = async (req: Request): Promise<Response> => {
     const message = sanitizeInput(body.message || '', 1000);
     const friendName = sanitizeInput(body.friendName || '', 100);
     const friendId = body.friendId ? sanitizeInput(body.friendId, 36) : null;
+    const bookingId = body.bookingId ? sanitizeInput(body.bookingId, 36) : null;
+    const phone = sanitizeInput(body.phone || '', 30);
 
     // Validate required fields
     if (!name || !email || !activity || !date || !time) {
@@ -124,6 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Look up friend email server-side using service role (bypasses RLS)
     let friendEmail: string | null = null;
+    let actionToken: string | null = null;
     if (friendId && isValidUUID(friendId)) {
       try {
         const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -138,6 +141,20 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
+    if (bookingId && isValidUUID(bookingId)) {
+      try {
+        const supabaseAdmin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        const { data: bookingRow } = await supabaseAdmin
+          .from('friend_bookings')
+          .select('action_token')
+          .eq('id', bookingId)
+          .single();
+        actionToken = bookingRow?.action_token || null;
+      } catch (err) {
+        console.error("Could not fetch booking action token");
+      }
+    }
+
     console.log("Processing booking request", { hasName: !!name, hasActivity: !!activity, hasDate: !!date, hasTime: !!time, hasFriendEmail: !!friendEmail });
 
     // HTML-escape values used in email templates to prevent injection
@@ -148,6 +165,18 @@ const handler = async (req: Request): Promise<Response> => {
     const eTime = escapeHtml(time);
     const eMessage = escapeHtml(message);
     const eFriendName = escapeHtml(friendName);
+    const ePhone = escapeHtml(phone);
+
+    const actionBaseUrl = `${SUPABASE_URL}/functions/v1/handle-action`;
+    const confirmUrl = actionToken ? `${actionBaseUrl}?type=booking&action=confirm&token=${actionToken}` : null;
+    const declineUrl = actionToken ? `${actionBaseUrl}?type=booking&action=decline&token=${actionToken}` : null;
+    const actionButtonsHtml = confirmUrl && declineUrl ? `
+      <div style="text-align:center;margin:28px 0;">
+        <a href="${confirmUrl}" style="display:inline-block;background:#166534;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;margin:6px;">✅ Confirm Booking</a>
+        <a href="${declineUrl}" style="display:inline-block;background:#991b1b;color:#fff;padding:14px 32px;border-radius:12px;text-decoration:none;font-weight:bold;margin:6px;">❌ Decline Booking</a>
+      </div>
+      <p style="color:#a0aec0;font-size:12px;text-align:center;">One click — the customer will be notified automatically.</p>
+    ` : '';
 
     // Send email to admin/owner
     const ownerEmailRes = await fetch("https://api.resend.com/emails", {
@@ -175,6 +204,7 @@ const handler = async (req: Request): Promise<Response> => {
               <h2 style="color: #e5a91a; margin-top: 0;">Customer Details</h2>
               <p style="margin: 8px 0;"><strong>Name:</strong> ${eName}</p>
               <p style="margin: 8px 0;"><strong>Email:</strong> ${eEmail}</p>
+              ${phone ? `<p style="margin: 8px 0;"><strong>Phone:</strong> ${ePhone}</p>` : ''}
             </div>
             
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;">
@@ -190,7 +220,9 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="margin: 0; color: #4a5568;">${eMessage}</p>
             </div>
             ` : ''}
-            
+
+            ${actionButtonsHtml}
+
             <p style="color: #718096; margin-top: 24px; text-align: center;">
               Reply to this email or contact ${eEmail} to confirm the booking!
             </p>
