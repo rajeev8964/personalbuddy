@@ -174,7 +174,8 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
             duration: formData.duration,
             message: formData.message,
             friendName: friend.full_name,
-            friendId: friend.id
+            friendId: friend.id,
+            bookingId: bookingData.id,
           }
         });
       } catch (emailError) {
@@ -271,6 +272,17 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
                   value={formData.clientPhone}
                   onChange={(e) => handleInputChange('clientPhone', e.target.value)}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Need help? Reach support on WhatsApp at{" "}
+                  <a
+                    href="https://wa.me/917970137598"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    +91 79701 37598
+                  </a>
+                </p>
               </div>
 
               <div className="space-y-2">
