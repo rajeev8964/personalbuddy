@@ -216,14 +216,35 @@ const CreateProfile = () => {
 
         if (error) throw error;
         toast.success("Profile updated! It will be reviewed by admin.");
+
+        // Notify admin so they can approve from email
+        try {
+          await supabase.functions.invoke('send-profile-approval-email', {
+            body: { profileId: existingProfile.id },
+          });
+        } catch (emailErr) {
+          console.error('Approval email failed:', emailErr);
+        }
       } else {
         // Create new profile
-        const { error } = await supabase
+        const { data: inserted, error } = await supabase
           .from('friend_profiles')
-          .insert(profileData);
+          .insert(profileData)
+          .select('id')
+          .single();
 
         if (error) throw error;
         toast.success("Profile submitted! It will be reviewed by admin.");
+
+        if (inserted?.id) {
+          try {
+            await supabase.functions.invoke('send-profile-approval-email', {
+              body: { profileId: inserted.id },
+            });
+          } catch (emailErr) {
+            console.error('Approval email failed:', emailErr);
+          }
+        }
       }
 
       // Refresh profile data
