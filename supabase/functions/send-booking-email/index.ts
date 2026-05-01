@@ -333,7 +333,9 @@ const handler = async (req: Request): Promise<Response> => {
                 <p style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-top: 24px;">
                   Please contact the customer at <strong>${eEmail}</strong> to confirm the session!
                 </p>
-                
+
+                ${actionButtonsHtml}
+
                 <p style="color: #e5a91a; font-weight: bold; font-size: 18px; margin-top: 24px;">
                   Have a great session! 🤝
                 </p>
