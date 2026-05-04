@@ -12,6 +12,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    phone: "",
     subject: "",
     message: "",
   });
@@ -25,6 +26,7 @@ const Contact = () => {
         body: {
           name: formData.name,
           email: formData.email,
+          phone: formData.phone,
           subject: formData.subject,
           message: formData.message,
         },
@@ -59,7 +61,7 @@ const Contact = () => {
               </p>
               <Button variant="outline" onClick={() => {
                 setSubmitted(false);
-                setFormData({ name: "", email: "", subject: "", message: "" });
+                setFormData({ name: "", email: "", phone: "", subject: "", message: "" });
               }} className="shadow-3d-sm hover:shadow-3d transition-all duration-300">
                 Send Another Message
               </Button>
@@ -140,6 +142,23 @@ const Contact = () => {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  className="h-12 shadow-inner-3d"
+                />
+              </div>
+
+              {/* Contact Number */}
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Contact Number <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <Input
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="e.g. +91 98765 43210"
+                  pattern="^[0-9+\-\s()]{7,20}$"
+                  maxLength={20}
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   className="h-12 shadow-inner-3d"
                 />
               </div>

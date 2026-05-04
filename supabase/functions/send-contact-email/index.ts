@@ -24,6 +24,7 @@ const getCorsHeaders = (origin: string | null) => {
 interface ContactRequest {
   name: string;
   email: string;
+  phone?: string;
   subject: string;
   message: string;
 }
@@ -99,6 +100,15 @@ const handler = async (req: Request): Promise<Response> => {
     // Validate and sanitize inputs
     const name = sanitizeInput(body.name, 100);
     const email = sanitizeInput(body.email, 254);
+    const phoneRaw = sanitizeInput(body.phone ?? "", 20);
+    // Allow digits, +, -, spaces, parens; 7-20 chars; or empty
+    const phone = /^[0-9+\-\s()]{7,20}$/.test(phoneRaw) ? phoneRaw : "";
+    if (phoneRaw && !phone) {
+      return new Response(
+        JSON.stringify({ error: "Please provide a valid contact number." }),
+        { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
+      );
+    }
     const subject = sanitizeInput(body.subject, 200);
     const message = sanitizeInput(body.message, 2000);
 
@@ -148,6 +158,7 @@ const handler = async (req: Request): Promise<Response> => {
               <h2 style="color: #3182ce; margin-top: 0;">From</h2>
               <p style="margin: 8px 0;"><strong>Name:</strong> ${name}</p>
               <p style="margin: 8px 0;"><strong>Email:</strong> ${email}</p>
+              ${phone ? `<p style="margin: 8px 0;"><strong>Contact Number:</strong> ${phone}</p>` : ""}
             </div>
             
             <div style="background: white; padding: 24px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
