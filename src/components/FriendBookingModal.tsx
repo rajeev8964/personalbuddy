@@ -265,10 +265,13 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="clientPhone">Phone Number *</Label>
+                <Label htmlFor="clientPhone">Contact Number *</Label>
                 <Input
                   id="clientPhone"
-                  placeholder="Your phone number"
+                  type="tel"
+                  inputMode="tel"
+                  placeholder="e.g. +91 98765 43210"
+                  maxLength={20}
                   value={formData.clientPhone}
                   onChange={(e) => handleInputChange('clientPhone', e.target.value)}
                 />
@@ -435,7 +438,7 @@ const FriendBookingModal = ({ friend, isOpen, onClose, onSuccess }: FriendBookin
                   <p className="font-medium">{formData.clientEmail}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">Phone</p>
+                  <p className="text-sm text-muted-foreground">Contact Number</p>
                   <p className="font-medium">{formData.clientPhone}</p>
                 </div>
                 <div>
