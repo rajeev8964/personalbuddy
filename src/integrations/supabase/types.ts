@@ -64,6 +64,8 @@ export type Database = {
       friend_bookings: {
         Row: {
           action_token: string
+          action_token_expires_at: string
+          action_token_used_at: string | null
           activity: string
           booking_date: string
           booking_time: string
@@ -80,6 +82,8 @@ export type Database = {
         }
         Insert: {
           action_token?: string
+          action_token_expires_at?: string
+          action_token_used_at?: string | null
           activity: string
           booking_date: string
           booking_time: string
@@ -96,6 +100,8 @@ export type Database = {
         }
         Update: {
           action_token?: string
+          action_token_expires_at?: string
+          action_token_used_at?: string | null
           activity?: string
           booking_date?: string
           booking_time?: string
@@ -130,6 +136,8 @@ export type Database = {
       friend_profiles: {
         Row: {
           action_token: string
+          action_token_expires_at: string
+          action_token_used_at: string | null
           age: number
           bio_data: string
           created_at: string
@@ -148,6 +156,8 @@ export type Database = {
         }
         Insert: {
           action_token?: string
+          action_token_expires_at?: string
+          action_token_used_at?: string | null
           age: number
           bio_data: string
           created_at?: string
@@ -166,6 +176,8 @@ export type Database = {
         }
         Update: {
           action_token?: string
+          action_token_expires_at?: string
+          action_token_used_at?: string | null
           age?: number
           bio_data?: string
           created_at?: string

@@ -68,7 +68,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
       const { data: profile, error: pErr } = await supabase
         .from("friend_profiles")
-        .select("id, full_name, email, is_approved, action_token")
+        .select("id, full_name, email, is_approved, action_token, action_token_used_at, action_token_expires_at")
         .eq("action_token", token)
         .maybeSingle();
       if (pErr || !profile) {
@@ -77,11 +77,27 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
+      if ((profile as any).action_token_used_at) {
+        return new Response(htmlPage("Link already used", `<h1>Link already used</h1><p>This approval link has already been used and cannot be reused.</p>`, "#991b1b"), {
+          status: 410, headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+      if ((profile as any).action_token_expires_at && new Date((profile as any).action_token_expires_at).getTime() < Date.now()) {
+        return new Response(htmlPage("Link expired", `<h1>Link expired</h1><p>This approval link has expired. Please review the profile from the admin portal.</p>`, "#991b1b"), {
+          status: 410, headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+
       const approve = action === "approve";
       const { error: uErr } = await supabase
         .from("friend_profiles")
-        .update({ is_approved: approve })
-        .eq("id", profile.id);
+        .update({
+          is_approved: approve,
+          action_token_used_at: new Date().toISOString(),
+          action_token: crypto.randomUUID(),
+        })
+        .eq("id", profile.id)
+        .is("action_token_used_at", null);
       if (uErr) throw uErr;
 
       // Notify the profile owner
@@ -124,7 +140,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
       const { data: booking, error: bErr } = await supabase
         .from("friend_bookings")
-        .select("id, client_name, client_email, activity, booking_date, booking_time, status, action_token, friend_id, friend_profiles:friend_id(full_name)")
+        .select("id, client_name, client_email, activity, booking_date, booking_time, status, action_token, action_token_used_at, action_token_expires_at, friend_id, friend_profiles:friend_id(full_name)")
         .eq("action_token", token)
         .maybeSingle();
       if (bErr || !booking) {
@@ -133,11 +149,27 @@ const handler = async (req: Request): Promise<Response> => {
         });
       }
 
+      if ((booking as any).action_token_used_at) {
+        return new Response(htmlPage("Link already used", `<h1>Link already used</h1><p>This booking link has already been used and cannot be reused.</p>`, "#991b1b"), {
+          status: 410, headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+      if ((booking as any).action_token_expires_at && new Date((booking as any).action_token_expires_at).getTime() < Date.now()) {
+        return new Response(htmlPage("Link expired", `<h1>Link expired</h1><p>This booking link has expired. Please manage the booking from the dashboard.</p>`, "#991b1b"), {
+          status: 410, headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
+      }
+
       const newStatus = action === "confirm" ? "confirmed" : "cancelled";
       const { error: uErr } = await supabase
         .from("friend_bookings")
-        .update({ status: newStatus })
-        .eq("id", booking.id);
+        .update({
+          status: newStatus,
+          action_token_used_at: new Date().toISOString(),
+          action_token: crypto.randomUUID(),
+        })
+        .eq("id", booking.id)
+        .is("action_token_used_at", null);
       if (uErr) throw uErr;
 
       const buddy = (booking as any).friend_profiles;
